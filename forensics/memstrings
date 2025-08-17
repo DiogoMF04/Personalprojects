@@ -1,0 +1,15 @@
+import argparse, re
+
+def extract_strings(data, min_len=4):
+    ascii_re=re.compile(rb"[ -~]{%d,}"%min_len)
+    for m in ascii_re.finditer(data):
+        yield m.group().decode(errors='ignore')
+
+if __name__=="__main__":
+    ap=argparse.ArgumentParser()
+    ap.add_argument("memdump", help="raw memory image")
+    args=ap.parse_args()
+    with open(args.memdump,'rb') as f:
+        data=f.read()
+    for s in extract_strings(data):
+        print(s)

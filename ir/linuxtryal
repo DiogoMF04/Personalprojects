@@ -1,0 +1,21 @@
+import subprocess, json
+
+def run(cmd):
+    try:
+        out=subprocess.check_output(cmd, shell=True, text=True, stderr=subprocess.STDOUT, timeout=6)
+        return out.strip()
+    except Exception as e:
+        return str(e)
+
+if __name__=="__main__":
+    report={
+        "uname": run("uname -a"),
+        "who": run("who"),
+        "uptime": run("uptime"),
+        "users": run("cut -d: -f1 /etc/passwd | wc -l"),
+        "processes": run("ps aux --sort=-%mem | head -n 25"),
+        "listening": run("ss -lntup | head -n 50"),
+        "crontab_root": run("crontab -l 2>/dev/null || echo 'no root crontab'"),
+        "persistence_candidates": run("ls -1 /etc/rc*.d 2>/dev/null; ls -1 ~/.config/autostart 2>/dev/null"),
+    }
+    print(json.dumps(report, indent=2))

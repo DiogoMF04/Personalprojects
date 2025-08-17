@@ -1,0 +1,15 @@
+import email, argparse, pathlib
+
+if __name__=="__main__":
+    ap=argparse.ArgumentParser()
+    ap.add_argument("eml", help="email file")
+    args=ap.parse_args()
+    raw=pathlib.Path(args.eml).read_text(errors='ignore')
+    msg=email.message_from_string(raw)
+    print("From:", msg.get("From"))
+    print("To:", msg.get("To"))
+    print("Subject:", msg.get("Subject"))
+    print("Date:", msg.get("Date"))
+    print("Received Headers:")
+    for h in msg.get_all("Received", []):
+        print("-", h)

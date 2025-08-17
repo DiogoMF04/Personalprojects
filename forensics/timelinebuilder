@@ -1,0 +1,25 @@
+import os, argparse, pathlib, json
+
+def walk_times(root):
+    timeline=[]
+    for dirpath,_,files in os.walk(root):
+        for fn in files:
+            fp=pathlib.Path(dirpath)/fn
+            try:
+                st=fp.stat()
+                timeline.append({
+                    "file": str(fp),
+                    "mtime": st.st_mtime,
+                    "ctime": st.st_ctime
+                })
+            except: pass
+    return timeline
+
+if __name__=="__main__":
+    ap=argparse.ArgumentParser()
+    ap.add_argument("root")
+    ap.add_argument("--out", default="timeline.json")
+    args=ap.parse_args()
+    data=walk_times(args.root)
+    pathlib.Path(args.out).write_text(json.dumps(data, indent=2))
+    print(f"Saved {len(data)} entries to {args.out}")

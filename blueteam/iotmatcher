@@ -1,0 +1,37 @@
+import argparse, re
+
+# IOC file lines:
+# domain:example.com
+# ip:1.2.3.4
+# sha256:deadbeef...
+
+def load_iocs(path):
+    doms=set(); ips=set(); hashes=set()
+    for line in open(path):
+        line=line.strip()
+        if not line or line.startswith('#'): continue
+        t,v=line.split(':',1)
+        if t=="domain": doms.add(v.lower())
+        elif t=="ip": ips.add(v)
+        elif t=="sha256": hashes.add(v.lower())
+    return doms, ips, hashes
+
+if __name__=="__main__":
+    ap=argparse.ArgumentParser()
+    ap.add_argument("ioc_file")
+    ap.add_argument("log_file")
+    args=ap.parse_args()
+
+    doms,ips,hashes=load_iocs(args.ioc_file)
+    dom_re=re.compile(r"([a-z0-9\\-]+\\.)+[a-z]{2,}", re.I)
+    ip_re=re.compile(r"\\b(?:\\d{1,3}\\.){3}\\d{1,3}\\b")
+    sha_re=re.compile(r"\\b[a-f0-9]{64}\\b", re.I)
+
+    with open(args.log_file, errors='ignore') as f:
+        for i,line in enumerate(f,1):
+            for d in dom_re.findall(line):
+                if d.lower() in doms: print(f"line {i}: domain hit {d}")
+            for ip in ip_re.findall(line):
+                if ip in ips: print(f"line {i}: ip hit {ip}")
+            for h in sha_re.findall(line):
+                if h.lower() in hashes: print(f"line {i}: hash hit {h}")

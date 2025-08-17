@@ -1,0 +1,23 @@
+import re, argparse, collections
+
+FAIL=re.compile(r"Failed password for (invalid user )?(?P<user>[\\w\\-]+) from (?P<ip>[0-9\\.]+)")
+OK=re.compile(r"Accepted password for (?P<user>[\\w\\-]+) from (?P<ip>[0-9\\.]+)")
+
+if __name__=="__main__":
+    ap=argparse.ArgumentParser()
+    ap.add_argument("path", help="/var/log/auth.log or rotated log")
+    ap.add_argument("--threshold", type=int, default=10)
+    args=ap.parse_args()
+
+    fails=collections.Counter(); success=collections.Counter()
+    with open(args.path, errors='ignore') as f:
+        for line in f:
+            m=FAIL.search(line)
+            if m: fails[(m.group('ip'), m.group('user'))]+=1
+            m=OK.search(line)
+            if m: success[(m.group('ip'), m.group('user'))]+=1
+
+    print("=== Suspected brute force sources ===")
+    for (ip,user),cnt in fails.most_common():
+        if cnt>=args.threshold and success[(ip,user)]==0:
+            print(f"{ip}\tuser={user}\tfails={cnt}")

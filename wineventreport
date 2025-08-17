@@ -1,0 +1,11 @@
+# Run in elevated PowerShell
+$filter = @{ LogName = 'Security'; Id = 4624,4625,4688 }
+$events = Get-WinEvent -FilterHashtable $filter -MaxEvents 500 | ForEach-Object {
+  [pscustomobject]@{
+    TimeCreated = $_.TimeCreated
+    Id = $_.Id
+    Message = $_.Message
+  }
+}
+$events | ConvertTo-Json -Depth 3 | Out-File events.json -Encoding utf8
+Write-Host "Exported to events.json"

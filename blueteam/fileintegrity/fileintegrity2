@@ -1,0 +1,39 @@
+import argparse, hashlib, json, os, pathlib
+
+def hash_file(p):
+    h=hashlib.sha256()
+    with open(p,'rb') as f:
+        for chunk in iter(lambda:f.read(8192), b''):
+            h.update(chunk)
+    return h.hexdigest()
+
+def snapshot(root):
+    data={}
+    for dirpath,_,files in os.walk(root):
+        for fn in files:
+            fp=pathlib.Path(dirpath)/fn
+            try:
+                data[str(fp)]=hash_file(fp)
+            except Exception:
+                pass
+    return data
+
+if __name__=="__main__":
+    ap=argparse.ArgumentParser()
+    ap.add_argument("mode", choices=["baseline","verify"])
+    ap.add_argument("path")
+    ap.add_argument("--out", default="baseline.json")
+    args=ap.parse_args()
+
+    if args.mode=="baseline":
+        data=snapshot(args.path)
+        pathlib.Path(args.out).write_text(json.dumps(data, indent=2))
+        print(f"Baseline saved to {args.out} ({len(data)} files)")
+    else:
+        base=json.loads(pathlib.Path(args.out).read_text())
+        now=snapshot(args.path)
+        added=set(now)-set(base); removed=set(base)-set(now)
+        changed=[p for p,h in now.items() if p in base and base[p]!=h]
+        print("Added:", *added, sep="\n- ") if added else print("No added files")
+        print("Removed:", *removed, sep="\n- ") if removed else print("No removed files")
+        print("Changed:", *changed, sep="\n- ") if changed else print("No changed files")

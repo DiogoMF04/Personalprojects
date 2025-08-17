@@ -1,0 +1,14 @@
+[
+  {
+    "name": "Office to Shell",
+    "when": "event=='process_start' and parent in ['winword.exe','excel.exe'] and proc in ['powershell.exe','cmd.exe']",
+    "severity": "high"
+  },
+  {
+    "name": "Repeated Failed Logins",
+    "when": "event=='auth_fail' and count>=10",
+    "group_by": ["src_ip","user"],
+    "window": 3600,
+    "severity": "medium"
+  }
+]

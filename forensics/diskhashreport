@@ -1,0 +1,23 @@
+import argparse, os, hashlib, json, pathlib
+
+def hash_file(path):
+    h=hashlib.sha256()
+    with open(path,'rb') as f:
+        for chunk in iter(lambda:f.read(8192), b''):
+            h.update(chunk)
+    return h.hexdigest()
+
+if __name__=="__main__":
+    ap=argparse.ArgumentParser()
+    ap.add_argument("root")
+    ap.add_argument("--out", default="disk_hashes.json")
+    args=ap.parse_args()
+    results={}
+    for dirpath,_,files in os.walk(args.root):
+        for fn in files:
+            fp=pathlib.Path(dirpath)/fn
+            try:
+                results[str(fp)]=hash_file(fp)
+            except: pass
+    pathlib.Path(args.out).write_text(json.dumps(results, indent=2))
+    print(f"Saved {len(results)} hashes to {args.out}")
